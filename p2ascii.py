@@ -25,7 +25,7 @@ class P2Ascii:
             end = index * 8
             return self.ascii_letters[0:8, start:end]
 
-    def convert_image_to_asscii_simple(self, image_path):
+    def convert_image_to_ascii_image_simple(self, image_path):
         image = cv2.imread(str(image_path), cv2.IMREAD_GRAYSCALE)
 
         if image is None:
@@ -53,20 +53,50 @@ class P2Ascii:
         save_path = Path.cwd() / filename
         cv2.imwrite(str(save_path), f_image)
 
+    def convert_image_to_ascii_text_simple(self, image_path):
+        image = cv2.imread(str(image_path), cv2.IMREAD_GRAYSCALE)
+
+        if image is None:
+            print("Error: image could not be loaded.")
+            return
+
+        rows, cols = image.shape
+        d_width = cols // 8
+        d_height = rows // 8
+        d_dim = (d_width, d_height)
+        u_dim = (cols, rows)
+        image = cv2.resize(image, d_dim, interpolation=cv2.INTER_AREA)
+        image = cv2.resize(image, u_dim, interpolation=cv2.INTER_NEAREST)
+        result = "\n"
+        for i in range(d_height):
+            for j in range(d_width):
+                pixel = image[i * 8, j * 8]
+                index = self.get_ascii_index_for_pixel(pixel)
+                result += self.ascii_list[index]
+            result += "\n"
+
+        return result
+
     def run(self):
         if len(sys.argv) < 2:
             print("Missing command. Try 'p2ascii help'")
             return
 
         command = sys.argv[1]
+
+        if command == "help":
+            pass
+
+        if len(sys.argv) < 3:
+            print("No image specified")
+            return
+
         print(command)
         match command:
             case "sc2image":
-                if len(sys.argv) < 3:
-                    print("No image path specified")
-                    return
-                print(sys.argv[2])
-                self.convert_image_to_asscii_simple(sys.argv[2])
+                self.convert_image_to_ascii_image_simple(sys.argv[2])
+            case "sc2text":
+                print(self.convert_image_to_ascii_text_simple(sys.argv[2]))
 
 
 if __name__ == "__main__":
