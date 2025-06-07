@@ -10,7 +10,7 @@ class P2Ascii:
     def __init__(self):
         self.ascii_list = [" ", ".", ":", "c", "o", "P", "B", "O", "?", "&", "#"]
         self.ascii_orientation_list = [" ", "|", "—", "/", "\\"]
-        self.ascii_letters = cv2.imread("1x0 8x8 2.png", cv2.IMREAD_GRAYSCALE)
+        self.ascii_letters_img = cv2.imread("1x0 8x8 2.png", cv2.IMREAD_GRAYSCALE)
         self.ascii_orientation_img = cv2.imread("edgesASCII.png", cv2.IMREAD_GRAYSCALE)
 
     def get_ascii_index_for_pixel(self, pixel: int) -> int:
@@ -25,7 +25,24 @@ class P2Ascii:
         else:
             start = (index - 1) * 8
             end = index * 8
-            return self.ascii_letters[0:8, start:end]
+            return self.ascii_letters_img[0:8, start:end]
+
+    def get_ascii_orientation_image_by_index(self, index: int):
+        start = index * 8
+        end = (index + 1) * 8
+        return ascii_orientation_img[0:8, start:end]
+
+    def get_ascii_orientation_index_for_angle(self, angle: float) -> int:
+        if angle <= 45:
+            return 1
+        elif angle <= 90:
+            return 2
+        elif angle <= 135:
+            return 3
+        elif angle <= 180:
+            return 4
+        else:
+            return 0
 
     def convert_image_to_ascii_image_simple(self, image_path):
         image = cv2.imread(str(image_path), cv2.IMREAD_GRAYSCALE)
@@ -78,6 +95,55 @@ class P2Ascii:
             result += "\n"
 
         return result
+
+    def convert_image_to_ascii_image_complex(self, image_path):
+        image = cv2.imread(str(image_path), cv2.IMREAD_GRAYSCALE)
+
+        if image is None:
+            print("Error: image could not be loaded.")
+            return
+
+        gX = cv2.Sobel(image, cv2.CV_64F, 1, 0, ksize=3)
+        gY = cv2.Sobel(image, cv2.CV_64F, 0, 1, ksize=3)
+
+        magnitude = np.sqrt((gX**2) + (gY**2))
+        orientation = (((np.arctan2(gY, gX) / np.pi) * 0.5 + 0.5) * 360) % 180
+
+        rows, cols = image.shape
+        d_width = cols // 8
+        d_height = rows // 8
+        d_dim = (d_width, d_height)
+        u_dim = (cols, rows)
+
+        downscaled_img = cv2.resize(image, d_dim, interpolation=cv2.INTER_AREA)
+        downscaled_img = cv2.resize(image, u_dim, interpolation=cv2.INTER_NEAREST)
+
+        orientation_downscaled = cv2.resize(
+            orientation, d_dim, interpolation=cv2.INTER_AREA
+        )
+        orientation_downscaled = cv2.resize(
+            orientation_downscaled, u_dim, interpolation=cv2.INTER_NEAREST
+        )
+
+        magnitude_downscaled = cv2.resize(
+            magnitude, d_dim, interpolation=cv2.INTER_AREA
+        )
+        magnitude_downscaled = cv2.resize(
+            magnitude, u_dim, interpolation=cv2.INTER_NEAREST
+        )
+
+        nonzero_magnitudes = magnitude_downscaled[magnitude_downscaled > 0]
+        threshold = np.percentile[nonzero_magnitudes, 90]
+
+        f_image = np.zeros([rows, cols], dtype=np.uint)
+
+        for i in range(d_height):
+            for j in range(d_width):
+                block_mag = magnitude[i * 8 : (i + 1) * 8, j * 8 : (j + 1) * 8]
+                if np.mean(block_mag) < threshold:
+                    continue
+                angle = orientation_downscaled[i * 8, j * 8]
+                index = self.get_ascii_orientation_index_for_angle(angle)
 
     def run(self):
         if len(sys.argv) < 2:
