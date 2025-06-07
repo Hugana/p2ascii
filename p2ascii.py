@@ -34,13 +34,13 @@ class P2Ascii:
 
     def get_ascii_orientation_index_for_angle(self, angle: float) -> int:
         if angle <= 45:
-            return 1
-        elif angle <= 90:
-            return 2
-        elif angle <= 135:
-            return 3
-        elif angle <= 180:
             return 4
+        elif angle <= 90:
+            return 3
+        elif angle <= 135:
+            return 2
+        elif angle <= 180:
+            return 1
         else:
             return 0
 
