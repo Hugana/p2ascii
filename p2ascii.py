@@ -30,7 +30,7 @@ class P2Ascii:
     def get_ascii_orientation_image_by_index(self, index: int):
         start = index * 8
         end = (index + 1) * 8
-        return ascii_orientation_img[0:8, start:end]
+        return self.ascii_orientation_img[0:8, start:end]
 
     def get_ascii_orientation_index_for_angle(self, angle: float) -> int:
         if angle <= 45:
@@ -116,7 +116,9 @@ class P2Ascii:
         u_dim = (cols, rows)
 
         downscaled_img = cv2.resize(image, d_dim, interpolation=cv2.INTER_AREA)
-        downscaled_img = cv2.resize(image, u_dim, interpolation=cv2.INTER_NEAREST)
+        downscaled_img = cv2.resize(
+            downscaled_img, u_dim, interpolation=cv2.INTER_NEAREST
+        )
 
         orientation_downscaled = cv2.resize(
             orientation, d_dim, interpolation=cv2.INTER_AREA
@@ -133,17 +135,31 @@ class P2Ascii:
         )
 
         nonzero_magnitudes = magnitude_downscaled[magnitude_downscaled > 0]
-        threshold = np.percentile[nonzero_magnitudes, 90]
+        threshold = np.percentile(nonzero_magnitudes, 90)
 
         f_image = np.zeros([rows, cols], dtype=np.uint)
 
         for i in range(d_height):
             for j in range(d_width):
+                pixel = downscaled_img[i * 8, j * 8]
+                index = self.get_ascii_index_for_pixel(pixel)
+                ascii_text_image = self.get_ascii_image_by_index(index)
+                f_image[i * 8 : (i + 1) * 8, j * 8 : (j + 1) * 8] = ascii_text_image
+
+        for i in range(d_height):
+            for j in range(d_width):
                 block_mag = magnitude[i * 8 : (i + 1) * 8, j * 8 : (j + 1) * 8]
-                if np.mean(block_mag) < threshold:
+                if np.mean(block_mag) < 30:
                     continue
                 angle = orientation_downscaled[i * 8, j * 8]
                 index = self.get_ascii_orientation_index_for_angle(angle)
+                ascii_text_image = self.get_ascii_orientation_image_by_index(index)
+                f_image[i * 8 : (i + 1) * 8, j * 8 : (j + 1) * 8] = ascii_text_image
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"image_{timestamp}.png"
+        save_path = Path.cwd() / filename
+        cv2.imwrite(str(save_path), f_image)
 
     def run(self):
         if len(sys.argv) < 2:
@@ -159,12 +175,13 @@ class P2Ascii:
             print("No image specified")
             return
 
-        print(command)
         match command:
             case "sc2image":
                 self.convert_image_to_ascii_image_simple(sys.argv[2])
             case "sc2text":
                 print(self.convert_image_to_ascii_text_simple(sys.argv[2]))
+            case "cc2image":
+                self.convert_image_to_ascii_image_complex(sys.argv[2])
 
 
 if __name__ == "__main__":
