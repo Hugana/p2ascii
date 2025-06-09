@@ -62,4 +62,4 @@ Used in complex conversion to control edge sensitivity based on gradient magnitu
 ![Complex ASCII Edge](Examples/Example1.png)
 
 ### Colored ASCII Text (Edge Detection)
-![Colored ASCII Text](images/Example3.png)
+![Colored ASCII Text](Examples/Example3.png)
