@@ -1,4 +1,4 @@
-# 🖼️ p2ascii
+# p2ascii
 
 **p2ascii** is a Python-based tool that converts images into ASCII art. It supports:
 
@@ -11,7 +11,7 @@ It can output:
 
 ---
 
-## 📌 Features
+## Features
 
 - Sobel-based edge detection for orientation-aware rendering.
 - Optional color support for both text and image modes.
@@ -21,13 +21,13 @@ It can output:
 
 ---
 
-## ⚙️ Requirements
+## Requirements
 
 - Python 3.7+
 - [`opencv-python`](https://pypi.org/project/opencv-python/)
 - [`numpy`](https://pypi.org/project/numpy/)
 
-## ✅ Usage
+## Usage
 
 ### 🔹 Simple Conversion (No Edge Detection)
 
@@ -43,7 +43,7 @@ It can output:
   - `cc2cimage <img> <thresh>`    Colored ASCII image with edge awareness
   - `cc2ctext <img> <thresh>`     Colored ASCII text with edge symbols
 
-## 📏 Threshold Parameter (<thresh>)
+## Threshold Parameter (<thresh>)
 
 Used in complex conversion to control edge sensitivity based on gradient magnitude.
   - auto: Automatically computes threshold as the 90th percentile of non-zero magnitudes:
