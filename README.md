@@ -52,3 +52,14 @@ Used in complex conversion to control edge sensitivity based on gradient magnitu
   - 0–255: Manual threshold.
     - Higher = fewer edges (only strong ones)
     - Lower = more edges (fine details)
+   
+## 🖼️ Example Outputs
+
+### Simple ASCII Image
+![Simple ASCII Image](Examples/Example2.png)
+
+### Complex ASCII Image (Edge Detection)
+![Complex ASCII Edge](Examples/Example1.png)
+
+### Colored ASCII Text (Edge Detection)
+![Colored ASCII Text](images/Example3.png)
