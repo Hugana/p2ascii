@@ -9,6 +9,8 @@ It can output:
 - ASCII **text**, optionally with ANSI color codes.
 - ASCII **images**, where characters are rendered as image blocks.
 
+**Note:** The output that is produced is the same dimension has the original both in image and in text. So using it in text keep in mind small images are better. 
+
 ---
 
 ## Features
