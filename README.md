@@ -31,13 +31,22 @@ It can output:
 
 ### 🔹 Simple Conversion (No Edge Detection)
 
-  - sc2image <img>	Convert image to ASCII image
-  - sc2text <img>	Convert image to ASCII text (stdout)
-  - sc2cimage <img>	Colored ASCII image
-  - sc2ctext <img>	Colored ASCII text (stdout)
+  - `sc2image <img>`         Convert image to ASCII image
+  - `sc2text <img>`          Convert image to ASCII text (stdout)
+  - `sc2cimage <img>`        Colored ASCII image
+  - `sc2ctext <img>`         Colored ASCII text (stdout)
+
 ### 🔸 Complex Conversion (With Edge Detection)
 
-  - cc2image <img> <thresh>	ASCII image using edge orientation
-  - cc2text <img> <thresh>	ASCII text with edge symbols (stdout)
-  - cc2cimage <img> <thresh>	Colored ASCII image with edge awareness
-  - cc2ctext <img> <thresh>	Colored ASCII text with edge symbols
+  - `cc2image <img> <thresh>`     ASCII image using edge orientation
+  - `cc2text <img> <thresh>`      ASCII text with edge symbols (stdout)
+  - `cc2cimage <img> <thresh>`    Colored ASCII image with edge awareness
+  - `cc2ctext <img> <thresh>`     Colored ASCII text with edge symbols
+
+## 📏 Threshold Parameter (<thresh>)
+
+Used in complex conversion to control edge sensitivity based on gradient magnitude.
+  - auto: Automatically computes threshold as the 90th percentile of non-zero magnitudes:
+  - 0–255: Manual threshold.
+    - Higher = fewer edges (only strong ones)
+    - Lower = more edges (fine details)
