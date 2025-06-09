@@ -13,8 +13,8 @@ class P2Ascii:
         self.ascii_letters_img = cv2.imread("1x0 8x8 2.png", cv2.IMREAD_GRAYSCALE)
         self.ascii_orientation_img = cv2.imread("edgesASCII.png", cv2.IMREAD_GRAYSCALE)
 
-        self.ascii_orientation_img_color = cv2.imread("edgesASCII.png",cv2.IMREAD_COLOR_RGB)
-        self.ascii_letters_img_color = cv2.imread("1x0 8x8 2.png",cv2.IMREAD_COLOR_RGB)
+        self.ascii_orientation_img_color = cv2.imread("edgesASCII.png",cv2.IMREAD_COLOR)
+        self.ascii_letters_img_color = cv2.imread("1x0 8x8 2.png",cv2.IMREAD_COLOR)
     
 
     def get_ascii_index_for_pixel(self, pixel: int) -> int:
@@ -25,7 +25,9 @@ class P2Ascii:
 
     def get_ascii_image_by_index(self, index: int,color: bool):
         if index == 0:
-            return np.zeros((8, 8), dtype=np.uint8)
+            if color:
+                return self.ascii_letters_img_color[0:8, 0:8]
+            return self.ascii_letters_img[0:8, 0:8]
         else:
             start = (index - 1) * 8
             end = index * 8
@@ -117,8 +119,7 @@ class P2Ascii:
 
     def convert_image_to_ascii_image_simple_color(self,image_path):
         image_gray = cv2.imread(str(image_path),cv2.IMREAD_GRAYSCALE)
-        image_color = cv2.imread(str(image_path), cv2.IMREAD_COLOR)  
-        image_color = cv2.cvtColor(image_color, cv2.COLOR_BGR2RGB)  
+        image_color = cv2.imread(str(image_path), cv2.IMREAD_COLOR)    
 
 
         if image_gray is None:
@@ -140,13 +141,13 @@ class P2Ascii:
         
         
         f_image = np.zeros([rows, cols, 3], dtype=np.uint8)
-
+        ascii_text_image_color = 0
         for i in range(d_height):
             for j in range(d_width):
                 pixel_color = image_color[i * 8, j * 8]
                 pixel_gray = image_gray[i * 8, j * 8]
                 index_gray = self.get_ascii_index_for_pixel(pixel_gray)
-                ascii_text_image = self.get_ascii_image_by_index(index_gray, True)
+                ascii_text_image = self.get_ascii_image_by_index(index_gray, True).copy()
                 ascii_text_image_color = self.set_color_of_ascii_image(ascii_text_image,pixel_color)
                 f_image[i * 8 : (i + 1) * 8, j * 8 : (j + 1) * 8] = ascii_text_image_color
 
