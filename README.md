@@ -53,7 +53,7 @@ Used in complex conversion to control edge sensitivity based on gradient magnitu
     - Higher = fewer edges (only strong ones)
     - Lower = more edges (fine details)
    
-## 🖼️ Example Outputs
+## Example Outputs
 
 ### Simple ASCII Image
 ![Simple ASCII Image](Examples/Example2.png)
