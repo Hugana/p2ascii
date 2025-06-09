@@ -10,12 +10,9 @@ class P2Ascii:
     def __init__(self):
         self.ascii_list = [" ", ".", ":", "c", "o", "P", "B", "O", "?", "&", "#"]
         self.ascii_orientation_list = [" ", "|", "—", "/", "\\"]
-        self.ascii_letters_img = cv2.imread("1x0 8x8 2.png", cv2.IMREAD_GRAYSCALE)
-        self.ascii_orientation_img = cv2.imread("edgesASCII.png", cv2.IMREAD_GRAYSCALE)
-
-        self.ascii_orientation_img_color = cv2.imread(
-            "edgesASCII.png", cv2.IMREAD_COLOR
-        )
+        self.ascii_letters_img = cv2.imread("Images\\1x0 8x8 2.png", cv2.IMREAD_GRAYSCALE)
+        self.ascii_orientation_img = cv2.imread("Images\\edgesASCII.png", cv2.IMREAD_GRAYSCALE)
+        self.ascii_orientation_img_color = cv2.imread("edgesASCII.png", cv2.IMREAD_COLOR)
         self.ascii_letters_img_color = cv2.imread("1x0 8x8 2.png", cv2.IMREAD_COLOR)
 
     def get_ascii_index_for_pixel(self, pixel: int) -> int:
@@ -94,13 +91,13 @@ class P2Ascii:
         d_width, d_height = cols // 8, rows // 8
         d_dim, u_dim = (d_width, d_height), (cols, rows)
 
-        mag_small = cv2.resize(magnitude, d_dim, interpolation=cv2.INTER_AREA)
-        ori_small = cv2.resize(orientation, d_dim, interpolation=cv2.INTER_AREA)
+        magnitude_downscaled = cv2.resize(magnitude, d_dim, interpolation=cv2.INTER_AREA)
+        orientation_downscaled = cv2.resize(orientation, d_dim, interpolation=cv2.INTER_AREA)
 
-        mag_up = cv2.resize(mag_small, u_dim, interpolation=cv2.INTER_NEAREST)
-        ori_up = cv2.resize(ori_small, u_dim, interpolation=cv2.INTER_NEAREST)
+        magnitude_upscaled = cv2.resize(magnitude_downscaled, u_dim, interpolation=cv2.INTER_NEAREST)
+        orientation_upscaled = cv2.resize(orientation_downscaled, u_dim, interpolation=cv2.INTER_NEAREST)
 
-        return mag_up, ori_up
+        return magnitude_upscaled, orientation_upscaled, magnitude
 
 
     def convert_image_to_ascii_image_simple(self, image_path):
@@ -111,7 +108,7 @@ class P2Ascii:
 
         for i in range(d_height):
             for j in range(d_width):
-                pixel = image[i * 8, j * 8]
+                pixel = gray[i * 8, j * 8]
                 index = self.get_ascii_index_for_pixel(pixel)
                 ascii_text_image = self.get_ascii_image_by_index(index, False)
                 f_image[i * 8 : (i + 1) * 8, j * 8 : (j + 1) * 8] = ascii_text_image
@@ -127,7 +124,7 @@ class P2Ascii:
         result = "\n"
         for i in range(d_height):
             for j in range(d_width):
-                pixel = image[i * 8, j * 8]
+                pixel = gray[i * 8, j * 8]
                 index = self.get_ascii_index_for_pixel(pixel)
                 result += self.ascii_list[index] * 2
             result += "\n"
@@ -135,24 +132,8 @@ class P2Ascii:
         return result
 
     def convert_image_to_ascii_image_simple_color(self, image_path):
-        image_gray = cv2.imread(str(image_path), cv2.IMREAD_GRAYSCALE)
-        image_color = cv2.imread(str(image_path), cv2.IMREAD_COLOR)
 
-        if image_gray is None:
-            print("Error: image could not be loaded")
-            return
-
-        rows, cols = image_gray.shape
-        d_width = cols // 8
-        d_height = rows // 8
-        d_dim = (d_width, d_height)
-        u_dim = (cols, rows)
-
-        image_gray = cv2.resize(image_gray, d_dim, interpolation=cv2.INTER_AREA)
-        image_gray = cv2.resize(image_gray, u_dim, interpolation=cv2.INTER_NEAREST)
-
-        image_color = cv2.resize(image_color, d_dim, interpolation=cv2.INTER_AREA)
-        image_color = cv2.resize(image_color, u_dim, interpolation=cv2.INTER_NEAREST)
+        image_gray, image, image_color, d_width, d_height, rows, cols = self.prepare_images(image_path,True)
 
         f_image = np.zeros([rows, cols, 3], dtype=np.uint8)
         ascii_text_image_color = 0
@@ -161,15 +142,9 @@ class P2Ascii:
                 pixel_color = image_color[i * 8, j * 8]
                 pixel_gray = image_gray[i * 8, j * 8]
                 index_gray = self.get_ascii_index_for_pixel(pixel_gray)
-                ascii_text_image = self.get_ascii_image_by_index(
-                    index_gray, True
-                ).copy()
-                ascii_text_image_color = self.set_color_of_ascii_image(
-                    ascii_text_image, pixel_color
-                )
-                f_image[i * 8 : (i + 1) * 8, j * 8 : (j + 1) * 8] = (
-                    ascii_text_image_color
-                )
+                ascii_text_image = self.get_ascii_image_by_index(index_gray, True).copy()
+                ascii_text_image_color = self.set_color_of_ascii_image(ascii_text_image, pixel_color)
+                f_image[i * 8 : (i + 1) * 8, j * 8 : (j + 1) * 8] = (ascii_text_image_color)
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"image_{timestamp}.png"
@@ -177,30 +152,13 @@ class P2Ascii:
         cv2.imwrite(str(save_path), f_image.astype(np.uint8))
 
     def convert_image_to_ascii_text_simple_color(self, image_path):
-        image_gray = cv2.imread(str(image_path), cv2.IMREAD_GRAYSCALE)
-        image_color = cv2.imread(str(image_path), cv2.IMREAD_COLOR)
-
-        if image_gray is None:
-            print("Error: image could not be loaded")
-            return
-
-        rows, cols = image_gray.shape
-        d_width = cols // 8
-        d_height = rows // 8
-        d_dim = (d_width, d_height)
-        u_dim = (cols, rows)
-
-        image_gray = cv2.resize(image_gray, d_dim, interpolation=cv2.INTER_AREA)
-        image_gray = cv2.resize(image_gray, u_dim, interpolation=cv2.INTER_NEAREST)
-
-        image_color = cv2.resize(image_color, d_dim, interpolation=cv2.INTER_AREA)
-        image_color = cv2.resize(image_color, u_dim, interpolation=cv2.INTER_NEAREST)
+        image_gray, image, color, d_width, d_height, rows, cols = self.prepare_images(image_path,True)
 
         result = "\n"
 
         for i in range(d_height):
             for j in range(d_width):
-                pixel_color = image_color[i * 8, j * 8]
+                pixel_color = color[i * 8, j * 8]
                 pixel_gray = image_gray[i * 8, j * 8]
                 index_gray = self.get_ascii_index_for_pixel(pixel_gray)
                 b = pixel_color[0]
@@ -222,42 +180,9 @@ class P2Ascii:
         return result
 
     def convert_image_to_ascii_text_complex(self, image_path, mag_threshold):
-        image = cv2.imread(str(image_path), cv2.IMREAD_GRAYSCALE)
+        gray, image, color, d_width, d_height, rows, cols = self.prepare_images(image_path,False)
 
-        if image is None:
-            print("Error: image could not be loaded.")
-            return
-
-        gX = cv2.Sobel(image, cv2.CV_64F, 1, 0, ksize=3)
-        gY = cv2.Sobel(image, cv2.CV_64F, 0, 1, ksize=3)
-
-        magnitude = np.sqrt((gX**2) + (gY**2))
-        orientation = (((np.arctan2(gY, gX) / np.pi) * 0.5 + 0.5) * 360) % 180
-
-        rows, cols = image.shape
-        d_width = cols // 8
-        d_height = rows // 8
-        d_dim = (d_width, d_height)
-        u_dim = (cols, rows)
-
-        downscaled_img = cv2.resize(image, d_dim, interpolation=cv2.INTER_AREA)
-        downscaled_img = cv2.resize(
-            downscaled_img, u_dim, interpolation=cv2.INTER_NEAREST
-        )
-
-        orientation_downscaled = cv2.resize(
-            orientation, d_dim, interpolation=cv2.INTER_AREA
-        )
-        magnitude_downscaled = cv2.resize(
-            magnitude, d_dim, interpolation=cv2.INTER_AREA
-        )
-
-        orientation_downscaled = cv2.resize(
-            orientation_downscaled, u_dim, interpolation=cv2.INTER_NEAREST
-        )
-        magnitude_downscaled = cv2.resize(
-            magnitude_downscaled, u_dim, interpolation=cv2.INTER_NEAREST
-        )
+        magnitude_downscaled, orientation_downscaled, magnitude = self.compute_gradients(gray, rows, cols)
 
         nonzero_magnitudes = magnitude_downscaled[magnitude_downscaled > 0]
         threshold = np.percentile(nonzero_magnitudes, 90)
@@ -274,9 +199,7 @@ class P2Ascii:
                     print("Error: magnitude must be between 0 and 255")
                     return
             except ValueError:
-                print(
-                    "Error: invalid magnitude parameter (must be 'auto' or an integer between 0 and 255)"
-                )
+                print("Error: invalid magnitude parameter (must be 'auto' or an integer between 0 and 255)")
                 return
 
         result = "\n"
@@ -286,7 +209,7 @@ class P2Ascii:
                 block_mag = magnitude[i * 8 : (i + 1) * 8, j * 8 : (j + 1) * 8]
 
                 if np.mean(block_mag) < value:
-                    pixel = downscaled_img[i * 8, j * 8]
+                    pixel = gray[i * 8, j * 8]
                     index = self.get_ascii_index_for_pixel(pixel)
                     result += self.ascii_list[index] * 2
                     continue
@@ -299,42 +222,9 @@ class P2Ascii:
         return result
 
     def convert_image_to_ascii_image_complex(self, image_path, mag_threshold):
-        image = cv2.imread(str(image_path), cv2.IMREAD_GRAYSCALE)
+        gray, image, color, d_width, d_height, rows, cols = self.prepare_images(image_path,False)
 
-        if image is None:
-            print("Error: image could not be loaded.")
-            return
-
-        gX = cv2.Sobel(image, cv2.CV_64F, 1, 0, ksize=3)
-        gY = cv2.Sobel(image, cv2.CV_64F, 0, 1, ksize=3)
-
-        magnitude = np.sqrt((gX**2) + (gY**2))
-        orientation = (((np.arctan2(gY, gX) / np.pi) * 0.5 + 0.5) * 360) % 180
-
-        rows, cols = image.shape
-        d_width = cols // 8
-        d_height = rows // 8
-        d_dim = (d_width, d_height)
-        u_dim = (cols, rows)
-
-        downscaled_img = cv2.resize(image, d_dim, interpolation=cv2.INTER_AREA)
-        downscaled_img = cv2.resize(
-            downscaled_img, u_dim, interpolation=cv2.INTER_NEAREST
-        )
-
-        orientation_downscaled = cv2.resize(
-            orientation, d_dim, interpolation=cv2.INTER_AREA
-        )
-        magnitude_downscaled = cv2.resize(
-            magnitude, d_dim, interpolation=cv2.INTER_AREA
-        )
-
-        orientation_downscaled = cv2.resize(
-            orientation_downscaled, u_dim, interpolation=cv2.INTER_NEAREST
-        )
-        magnitude_downscaled = cv2.resize(
-            magnitude_downscaled, u_dim, interpolation=cv2.INTER_NEAREST
-        )
+        magnitude_downscaled, orientation_downscaled, magnitude = self.compute_gradients(gray, rows, cols)
 
         nonzero_magnitudes = magnitude_downscaled[magnitude_downscaled > 0]
         threshold = np.percentile(nonzero_magnitudes, 90)
@@ -353,9 +243,7 @@ class P2Ascii:
                     print("Error: magnitude must be between 0 and 255")
                     return
             except ValueError:
-                print(
-                    "Error: invalid magnitude parameter (must be 'auto' or an integer between 0 and 255)"
-                )
+                print("Error: invalid magnitude parameter (must be 'auto' or an integer between 0 and 255)")
                 return
 
         for i in range(d_height):
@@ -363,7 +251,7 @@ class P2Ascii:
                 block_mag = magnitude[i * 8 : (i + 1) * 8, j * 8 : (j + 1) * 8]
 
                 if np.mean(block_mag) < value:
-                    pixel = downscaled_img[i * 8, j * 8]
+                    pixel = gray[i * 8, j * 8]
                     index = self.get_ascii_index_for_pixel(pixel)
                     ascii_text_image = self.get_ascii_image_by_index(index, False)
                     f_image[i * 8 : (i + 1) * 8, j * 8 : (j + 1) * 8] = ascii_text_image
@@ -371,9 +259,7 @@ class P2Ascii:
 
                 angle = orientation_downscaled[i * 8, j * 8]
                 index = self.get_ascii_orientation_index_for_angle(angle)
-                ascii_text_image = self.get_ascii_orientation_image_by_index(
-                    index, False
-                )
+                ascii_text_image = self.get_ascii_orientation_image_by_index(index, False)
                 f_image[i * 8 : (i + 1) * 8, j * 8 : (j + 1) * 8] = ascii_text_image
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -382,46 +268,9 @@ class P2Ascii:
         cv2.imwrite(str(save_path), f_image.astype(np.uint8))
 
     def convert_image_to_ascii_image_complex_color(self, image_path, mag_threshold):
-        image_gray = cv2.imread(str(image_path), cv2.IMREAD_GRAYSCALE)
-        image_color = cv2.imread(str(image_path), cv2.IMREAD_COLOR)
+        gray, image, color, d_width, d_height, rows, cols = self.prepare_images(image_path,True)
 
-        if image_gray is None:
-            print("Error: image could not be loaded.")
-            return
-
-        gX = cv2.Sobel(image_gray, cv2.CV_64F, 1, 0, ksize=3)
-        gY = cv2.Sobel(image_gray, cv2.CV_64F, 0, 1, ksize=3)
-
-        magnitude = np.sqrt((gX**2) + (gY**2))
-        orientation = (((np.arctan2(gY, gX) / np.pi) * 0.5 + 0.5) * 360) % 180
-
-        rows, cols = image_gray.shape
-        d_width = cols // 8
-        d_height = rows // 8
-        d_dim = (d_width, d_height)
-        u_dim = (cols, rows)
-
-        image_color = cv2.resize(image_color, d_dim, interpolation=cv2.INTER_AREA)
-        image_color = cv2.resize(image_color, u_dim, interpolation=cv2.INTER_NEAREST)
-
-        downscaled_img = cv2.resize(image_gray, d_dim, interpolation=cv2.INTER_AREA)
-        downscaled_img = cv2.resize(
-            downscaled_img, u_dim, interpolation=cv2.INTER_NEAREST
-        )
-
-        orientation_downscaled = cv2.resize(
-            orientation, d_dim, interpolation=cv2.INTER_AREA
-        )
-        magnitude_downscaled = cv2.resize(
-            magnitude, d_dim, interpolation=cv2.INTER_AREA
-        )
-
-        orientation_downscaled = cv2.resize(
-            orientation_downscaled, u_dim, interpolation=cv2.INTER_NEAREST
-        )
-        magnitude_downscaled = cv2.resize(
-            magnitude_downscaled, u_dim, interpolation=cv2.INTER_NEAREST
-        )
+        magnitude_downscaled, orientation_downscaled, magnitude = self.compute_gradients(gray, rows, cols)
 
         nonzero_magnitudes = magnitude_downscaled[magnitude_downscaled > 0]
         threshold = np.percentile(nonzero_magnitudes, 90)
@@ -440,9 +289,7 @@ class P2Ascii:
                     print("Error: magnitude must be between 0 and 255")
                     return
             except ValueError:
-                print(
-                    "Error: invalid magnitude parameter (must be 'auto' or an integer between 0 and 255)"
-                )
+                print("Error: invalid magnitude parameter (must be 'auto' or an integer between 0 and 255)")
                 return
 
         for i in range(d_height):
@@ -450,32 +297,20 @@ class P2Ascii:
                 block_mag = magnitude[i * 8 : (i + 1) * 8, j * 8 : (j + 1) * 8]
 
                 if np.mean(block_mag) < value:
-                    pixel_gray = downscaled_img[i * 8, j * 8]
-                    pixel_color = image_color[i * 8, j * 8]
+                    pixel_gray = gray[i * 8, j * 8]
+                    pixel_color = color[i * 8, j * 8]
                     index_gray = self.get_ascii_index_for_pixel(pixel_gray)
-                    ascii_text_image = self.get_ascii_image_by_index(
-                        index_gray, True
-                    ).copy()
-                    ascii_text_image_color = self.set_color_of_ascii_image(
-                        ascii_text_image, pixel_color
-                    )
-                    f_image[i * 8 : (i + 1) * 8, j * 8 : (j + 1) * 8] = (
-                        ascii_text_image_color
-                    )
+                    ascii_text_image = self.get_ascii_image_by_index(index_gray, True).copy()
+                    ascii_text_image_color = self.set_color_of_ascii_image(ascii_text_image, pixel_color)
+                    f_image[i * 8 : (i + 1) * 8, j * 8 : (j + 1) * 8] = (ascii_text_image_color)
                     continue
 
                 angle = orientation_downscaled[i * 8, j * 8]
-                pixel_color = image_color[i * 8, j * 8]
+                pixel_color = color[i * 8, j * 8]
                 index = self.get_ascii_orientation_index_for_angle(angle)
-                ascii_orientation_image = self.get_ascii_orientation_image_by_index(
-                    index, True
-                ).copy()
-                ascii_orientation_image_color = self.set_color_of_ascii_image(
-                    ascii_orientation_image, pixel_color
-                )
-                f_image[i * 8 : (i + 1) * 8, j * 8 : (j + 1) * 8] = (
-                    ascii_orientation_image_color
-                )
+                ascii_orientation_image = self.get_ascii_orientation_image_by_index(index, True).copy()
+                ascii_orientation_image_color = self.set_color_of_ascii_image(ascii_orientation_image, pixel_color)
+                f_image[i * 8 : (i + 1) * 8, j * 8 : (j + 1) * 8] = (ascii_orientation_image_color)
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"image_{timestamp}.png"
@@ -483,46 +318,9 @@ class P2Ascii:
         cv2.imwrite(str(save_path), f_image.astype(np.uint8))
 
     def convert_image_to_ascii_text_complex_color(self, image_path, mag_threshold):
-        image_gray = cv2.imread(str(image_path), cv2.IMREAD_GRAYSCALE)
-        image_color = cv2.imread(str(image_path), cv2.IMREAD_COLOR)
+        gray, image, color, d_width, d_height, rows, cols = self.prepare_images(image_path,True)
 
-        if image_gray is None:
-            print("Error: image could not be loaded.")
-            return
-
-        gX = cv2.Sobel(image_gray, cv2.CV_64F, 1, 0, ksize=3)
-        gY = cv2.Sobel(image_gray, cv2.CV_64F, 0, 1, ksize=3)
-
-        magnitude = np.sqrt((gX**2) + (gY**2))
-        orientation = (((np.arctan2(gY, gX) / np.pi) * 0.5 + 0.5) * 360) % 180
-
-        rows, cols = image_gray.shape
-        d_width = cols // 8
-        d_height = rows // 8
-        d_dim = (d_width, d_height)
-        u_dim = (cols, rows)
-
-        image_color = cv2.resize(image_color, d_dim, interpolation=cv2.INTER_AREA)
-        image_color = cv2.resize(image_color, u_dim, interpolation=cv2.INTER_NEAREST)
-
-        downscaled_img = cv2.resize(image_gray, d_dim, interpolation=cv2.INTER_AREA)
-        downscaled_img = cv2.resize(
-            downscaled_img, u_dim, interpolation=cv2.INTER_NEAREST
-        )
-
-        orientation_downscaled = cv2.resize(
-            orientation, d_dim, interpolation=cv2.INTER_AREA
-        )
-        magnitude_downscaled = cv2.resize(
-            magnitude, d_dim, interpolation=cv2.INTER_AREA
-        )
-
-        orientation_downscaled = cv2.resize(
-            orientation_downscaled, u_dim, interpolation=cv2.INTER_NEAREST
-        )
-        magnitude_downscaled = cv2.resize(
-            magnitude_downscaled, u_dim, interpolation=cv2.INTER_NEAREST
-        )
+        magnitude_downscaled, orientation_downscaled, magnitude = self.compute_gradients(gray, rows, cols)
 
         nonzero_magnitudes = magnitude_downscaled[magnitude_downscaled > 0]
         threshold = np.percentile(nonzero_magnitudes, 90)
@@ -551,8 +349,8 @@ class P2Ascii:
                 block_mag = magnitude[i * 8 : (i + 1) * 8, j * 8 : (j + 1) * 8]
 
                 if np.mean(block_mag) < value:
-                    pixel_gray = downscaled_img[i * 8, j * 8]
-                    pixel_color = image_color[i * 8, j * 8]
+                    pixel_gray = gray[i * 8, j * 8]
+                    pixel_color = color[i * 8, j * 8]
                     index_gray = self.get_ascii_index_for_pixel(pixel_gray)
                     b = pixel_color[0]
                     g = pixel_color[1]
@@ -571,7 +369,7 @@ class P2Ascii:
                     continue
 
                 angle = orientation_downscaled[i * 8, j * 8]
-                pixel_color = image_color[i * 8, j * 8]
+                pixel_color = color[i * 8, j * 8]
                 index = self.get_ascii_orientation_index_for_angle(angle)
                 b = pixel_color[0]
                 g = pixel_color[1]
@@ -593,19 +391,25 @@ class P2Ascii:
 
     def show_help(self):
         print("Usage:")
-        print("  p2ascii help                       Show this help message")
-        print(
-            "  p2ascii sc2image <img>            Convert image to ASCII image (simple)"
-        )
-        print(
-            "  p2ascii sc2text <img>             Convert image to ASCII text (simple)"
-        )
-        print(
-            "  p2ascii cc2image <img> <thresh>   Convert image to ASCII image (complex)"
-        )
-        print(
-            "  p2ascii cc2text <img> <thresh>    Convert image to ASCII text (complex)"
-        )
+        print("  p2ascii help                              Show this help message")
+        print()
+        print("  # SIMPLE CONVERSION WITHOUT EDGE DETECTION")
+        print("  p2ascii sc2image <img>                    Convert image to ASCII image")
+        print("  p2ascii sc2text <img>                     Convert image to ASCII text")
+        print("  p2ascii sc2cimage <img>                   Convert image to ASCII image with color")
+        print("  p2ascii sc2ctext <img>                    Convert image to ASCII text with color")
+        print()
+        print("  # COMPLEX CONVERSION WITH EDGE DETECTION")
+        print("  p2ascii cc2image <img> <thresh>           Convert image to ASCII image")
+        print("  p2ascii cc2text <img> <thresh>            Convert image to ASCII text")
+        print("  p2ascii cc2cimage <img> <thresh>          Convert image to ASCII image with color")
+        print("  p2ascii cc2ctext <img> <thresh>           Convert image to ASCII text with color")
+        print()
+        print("Note on <thresh>: ")
+        print("  <thresh> defines the edge detection threshold:")
+        print("    - Higher values result in fewer edges (stricter)")
+        print("    - Lower values result in more edges (more permissive)")
+        print("    - 'auto' sets the threshold automatically using a 90th percentile of the nonzero gradient magnitudes:")
 
     def run(self):
         if len(sys.argv) < 2:
@@ -623,6 +427,7 @@ class P2Ascii:
             return
 
         match command:
+
             case "sc2image":
                 self.convert_image_to_ascii_image_simple(sys.argv[2])
 
@@ -631,6 +436,9 @@ class P2Ascii:
 
             case "sc2text":
                 print(self.convert_image_to_ascii_text_simple(sys.argv[2]))
+            
+            case "sc2ctext":
+                print(self.convert_image_to_ascii_text_simple_color(sys.argv[2]))
 
             case "cc2image":
                 if len(sys.argv) < 4:
@@ -642,33 +450,19 @@ class P2Ascii:
                 if len(sys.argv) < 4:
                     print("Error: need argument for mag threshold")
                     return
-                print(
-                    self.convert_image_to_ascii_text_complex(sys.argv[2], sys.argv[3])
-                )
-
-            case "sc2cimage":
-                self.convert_image_to_ascii_image_simple_color(sys.argv[2])
-
-            case "sc2ctext":
-                print(self.convert_image_to_ascii_text_simple_color(sys.argv[2]))
+                print(self.convert_image_to_ascii_text_complex(sys.argv[2], sys.argv[3]))
 
             case "cc2cimage":
                 if len(sys.argv) < 4:
                     print("Error: need argument for mag threshold")
                     return
-                self.convert_image_to_ascii_image_complex_color(
-                    sys.argv[2], sys.argv[3]
-                )
+                self.convert_image_to_ascii_image_complex_color(sys.argv[2], sys.argv[3])
 
             case "cc2ctext":
                 if len(sys.argv) < 4:
                     print("Error: need argument for mag threshold")
                     return
-                print(
-                    self.convert_image_to_ascii_text_complex_color(
-                        sys.argv[2], sys.argv[3]
-                    )
-                )
+                print(self.convert_image_to_ascii_text_complex_color(sys.argv[2], sys.argv[3]))
 
             case _:
                 print(f"Unknown command: {command}")
