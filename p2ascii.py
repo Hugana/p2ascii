@@ -30,7 +30,7 @@ class P2Ascii:
         if self.ascii_letters_img_color is None:
             print(f"Error: Could not load image from {asset_dir / '1x0 8x8 2.png'}", file=sys.stderr)
             sys.exit(1)
-        if self.ascii_orientation_image_color is None:
+        if self.ascii_orientation_img_color is None:
             print(f"Error: Could not load image from {asset_dir / 'edgesASCII.png'}", file=sys.stderr)
             sys.exit(1)
         
