@@ -23,6 +23,10 @@ It can output:
 
 ---
 
+## Instalation
+
+---
+
 ## Requirements
 
 - Python 3.7+
@@ -68,4 +72,4 @@ Used in complex conversion to control edge sensitivity based on gradient magnitu
 
 Motivation
 
-My motivation for this project stems from a captivating video by Acerola, which you can find here: https://www.youtube.com/watch?v=gg40RWiaHRY. Inspired by their work, I wanted to challenge and test my skills in computer vision.
+My motivation for this project stems from a captivating video by Acerola, which you can find here: https://www.youtube.com/watch?v=gg40RWiaHRY. Inspired by his work, I wanted to challenge and test my skills in computer vision.
