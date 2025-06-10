@@ -63,3 +63,9 @@ Used in complex conversion to control edge sensitivity based on gradient magnitu
 
 ### Colored ASCII Text (Edge Detection)
 ![Colored ASCII Text](Examples/Example3.png)
+
+## Motivation 
+
+Motivation
+
+My motivation for this project stems from a captivating video by Acerola, which you can find here: https://www.youtube.com/watch?v=gg40RWiaHRY. Inspired by their work, I wanted to challenge and test my skills in computer vision.
