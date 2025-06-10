@@ -14,24 +14,24 @@ class P2Ascii:
         self.ascii_orientation_list = [" ", "|", "—", "/", "\\"]
 
         script_dir = Path(__file__).parent.resolve()
-        asset_dir = Path("/usr/share/p2ascii/Images")
+        self.asset_dir = script_dir / "Images" 
 
-        self.ascii_letters_img = cv2.imread(str(asset_dir / "1x0 8x8 2.png"), cv2.IMREAD_GRAYSCALE)
-        self.ascii_orientation_img = cv2.imread(str(asset_dir / "edgesASCII.png"), cv2.IMREAD_GRAYSCALE)
-        self.ascii_orientation_img_color = cv2.imread(str(asset_dir / "edgesASCII.png"), cv2.IMREAD_COLOR)
-        self.ascii_letters_img_color = cv2.imread(str(asset_dir / "1x0 8x8 2.png"), cv2.IMREAD_COLOR)
+        self.ascii_letters_img = cv2.imread(str(self.asset_dir / "1x0 8x8 2.png"), cv2.IMREAD_GRAYSCALE)
+        self.ascii_orientation_img = cv2.imread(str(self.asset_dir / "edgesASCII.png"), cv2.IMREAD_GRAYSCALE)
+        self.ascii_orientation_img_color = cv2.imread(str(self.asset_dir / "edgesASCII.png"), cv2.IMREAD_COLOR)
+        self.ascii_letters_img_color = cv2.imread(str(self.asset_dir / "1x0 8x8 2.png"), cv2.IMREAD_COLOR)
 
         if self.ascii_letters_img is None:
-            print(f"Error: Could not load image from {asset_dir / '1x0 8x8 2.png'}", file=sys.stderr)
+            print(f"Error: Could not load image from {self.asset_dir / '1x0 8x8 2.png'}", file=sys.stderr)
             sys.exit(1)
         if self.ascii_orientation_img is None:
-            print(f"Error: Could not load image from {asset_dir / 'edgesASCII.png'}", file=sys.stderr)
+            print(f"Error: Could not load image from {self.asset_dir / 'edgesASCII.png'}", file=sys.stderr)
             sys.exit(1)
         if self.ascii_letters_img_color is None:
-            print(f"Error: Could not load image from {asset_dir / '1x0 8x8 2.png'}", file=sys.stderr)
+            print(f"Error: Could not load image from {self.asset_dir / '1x0 8x8 2.png'}", file=sys.stderr)
             sys.exit(1)
         if self.ascii_orientation_img_color is None:
-            print(f"Error: Could not load image from {asset_dir / 'edgesASCII.png'}", file=sys.stderr)
+            print(f"Error: Could not load image from {self.asset_dir / 'edgesASCII.png'}", file=sys.stderr)
             sys.exit(1)
         
 
@@ -119,7 +119,6 @@ class P2Ascii:
 
         return magnitude_upscaled, orientation_upscaled, magnitude
 
-
     def convert_image_to_ascii_image_simple(self, image_path):
 
         gray, image, color, d_width, d_height, rows, cols = self.prepare_images(image_path,False)
@@ -150,7 +149,7 @@ class P2Ascii:
             result += "\n"
 
         return result
-
+    
     def convert_image_to_ascii_image_simple_color(self, image_path):
 
         image_gray, image, image_color, d_width, d_height, rows, cols = self.prepare_images(image_path,True)
