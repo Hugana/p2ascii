@@ -1,7 +1,9 @@
+#!/usr/bin/env python3
+
 import sys
 from datetime import datetime
 from pathlib import Path
-
+import os 
 import cv2
 import numpy as np
 
@@ -10,10 +12,28 @@ class P2Ascii:
     def __init__(self):
         self.ascii_list = [" ", ".", ":", "c", "o", "P", "B", "O", "?", "&", "#"]
         self.ascii_orientation_list = [" ", "|", "—", "/", "\\"]
-        self.ascii_letters_img = cv2.imread("Images/1x0 8x8 2.png", cv2.IMREAD_GRAYSCALE)
-        self.ascii_orientation_img = cv2.imread("Images/edgesASCII.png", cv2.IMREAD_GRAYSCALE)
-        self.ascii_orientation_img_color = cv2.imread("Images/edgesASCII.png", cv2.IMREAD_COLOR)
-        self.ascii_letters_img_color = cv2.imread("Images/1x0 8x8 2.png", cv2.IMREAD_COLOR)
+
+        script_dir = Path(__file__).parent.resolve()
+        asset_dir = Path("/usr/share/p2ascii/Images")
+
+        self.ascii_letters_img = cv2.imread(str(asset_dir / "1x0 8x8 2.png"), cv2.IMREAD_GRAYSCALE)
+        self.ascii_orientation_img = cv2.imread(str(asset_dir / "edgesASCII.png"), cv2.IMREAD_GRAYSCALE)
+        self.ascii_orientation_img_color = cv2.imread(str(asset_dir / "edgesASCII.png"), cv2.IMREAD_COLOR)
+        self.ascii_letters_img_color = cv2.imread(str(asset_dir / "1x0 8x8 2.png"), cv2.IMREAD_COLOR)
+
+        if self.ascii_letters_img is None:
+            print(f"Error: Could not load image from {asset_dir / '1x0 8x8 2.png'}", file=sys.stderr)
+            sys.exit(1)
+        if self.ascii_orientation_img is None:
+            print(f"Error: Could not load image from {asset_dir / 'edgesASCII.png'}", file=sys.stderr)
+            sys.exit(1)
+        if self.ascii_letters_img_color is None:
+            print(f"Error: Could not load image from {asset_dir / '1x0 8x8 2.png'}", file=sys.stderr)
+            sys.exit(1)
+        if self.ascii_orientation_image_color is None:
+            print(f"Error: Could not load image from {asset_dir / 'edgesASCII.png'}", file=sys.stderr)
+            sys.exit(1)
+        
 
     def get_ascii_index_for_pixel(self, pixel: int) -> int:
         num_levels = len(self.ascii_list)
