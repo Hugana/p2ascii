@@ -6,6 +6,12 @@ from pathlib import Path
 import os 
 import cv2
 import numpy as np
+import sys
+from datetime import datetime
+from pathlib import Path
+import os
+import cv2
+import numpy as np
 
 
 class P2Ascii:
@@ -14,24 +20,25 @@ class P2Ascii:
         self.ascii_orientation_list = [" ", "|", "—", "/", "\\"]
 
         script_dir = Path(__file__).parent.resolve()
-        self.asset_dir = script_dir / "Images" 
+        self.asset_dir = script_dir / "Images"
 
-        self.ascii_letters_img = cv2.imread(str(self.asset_dir / "1x0 8x8 2.png"), cv2.IMREAD_GRAYSCALE)
-        self.ascii_orientation_img = cv2.imread(str(self.asset_dir / "edgesASCII.png"), cv2.IMREAD_GRAYSCALE)
         self.ascii_orientation_img_color = cv2.imread(str(self.asset_dir / "edgesASCII.png"), cv2.IMREAD_COLOR)
         self.ascii_letters_img_color = cv2.imread(str(self.asset_dir / "1x0 8x8 2.png"), cv2.IMREAD_COLOR)
 
-        if self.ascii_letters_img is None:
-            print(f"Error: Could not load image from {self.asset_dir / '1x0 8x8 2.png'}", file=sys.stderr)
-            sys.exit(1)
-        if self.ascii_orientation_img is None:
-            print(f"Error: Could not load image from {self.asset_dir / 'edgesASCII.png'}", file=sys.stderr)
-            sys.exit(1)
+        self.ascii_letters_img_color_transparent = cv2.imread(str(self.asset_dir / "1x0 8x8 2-Transparent.png"), cv2.IMREAD_UNCHANGED)
+        self.ascii_orientation_color_transparent = cv2.imread(str(self.asset_dir / "edgesASCII-Transparent.png"), cv2.IMREAD_UNCHANGED)
+
         if self.ascii_letters_img_color is None:
             print(f"Error: Could not load image from {self.asset_dir / '1x0 8x8 2.png'}", file=sys.stderr)
             sys.exit(1)
         if self.ascii_orientation_img_color is None:
             print(f"Error: Could not load image from {self.asset_dir / 'edgesASCII.png'}", file=sys.stderr)
+            sys.exit(1)
+        if self.ascii_letters_img_color_transparent is None:
+            print(f"Error: Could not load image from {self.asset_dir / '1x0 8x8 2-Transparent.png'}", file=sys.stderr)
+            sys.exit(1)
+        if self.ascii_orientation_color_transparent is None:
+            print(f"Error: Could not load image from {self.asset_dir / 'edgesASCII-Transparent.png'}", file=sys.stderr)
             sys.exit(1)
         
 
@@ -41,24 +48,25 @@ class P2Ascii:
         index = min(pixel // step, num_levels - 1)
         return index
 
-    def get_ascii_image_by_index(self, index: int, color: bool):
+    def get_ascii_image_by_index(self, index: int,transparent: bool):
         if index == 0:
-            if color:
-                return self.ascii_letters_img_color[0:8, 0:8]
-            return self.ascii_letters_img[0:8, 0:8]
+            if transparent:
+                return self.ascii_letters_img_color_transparent[0:8,0:8]
+            return self.ascii_letters_img_color[0:8, 0:8]
         else:
             start = (index - 1) * 8
             end = index * 8
-            if color:
-                return self.ascii_letters_img_color[0:8, start:end]
-            return self.ascii_letters_img[0:8, start:end]
+            if transparent:
+                return self.ascii_letters_img_color_transparent[0:8,start:end]
+            return self.ascii_letters_img_color[0:8, start:end]
 
-    def get_ascii_orientation_image_by_index(self, index: int, color: bool):
+
+    def get_ascii_orientation_image_by_index(self, index: int,transparent: bool):
         start = index * 8
         end = (index + 1) * 8
-        if color:
-            return self.ascii_orientation_img_color[0:8, start:end]
-        return self.ascii_orientation_img[0:8, start:end]
+        if transparent:
+            return self.ascii_orientation_color_transparent[0:8,start:end]
+        return self.ascii_orientation_img_color[0:8, start:end]
 
     def get_ascii_orientation_index_for_angle(self, angle: float) -> int:
         if angle <= 45:
@@ -73,12 +81,11 @@ class P2Ascii:
             return 0
 
     def set_color_of_ascii_image(self, ascii_image, color):
-        rows, cols, _ = ascii_image.shape
+        rows, cols, channels = ascii_image.shape
         for i in range(rows):
             for j in range(cols):
-                if np.array_equal(ascii_image[i, j], [255, 255, 255]):
-                    ascii_image[i, j] = color
-
+                if np.array_equal(ascii_image[i, j, 0:3], [255, 255, 255]):
+                    ascii_image[i, j, 0:3] = color
         return ascii_image
 
     def prepare_images(self, image_path, with_color=True):
@@ -119,17 +126,20 @@ class P2Ascii:
 
         return magnitude_upscaled, orientation_upscaled, magnitude
 
-    def convert_image_to_ascii_image_simple(self, image_path):
+    def convert_image_to_ascii_image_simple(self, image_path,is_transparent):
 
         gray, image, color, d_width, d_height, rows, cols = self.prepare_images(image_path,False)
 
-        f_image = np.zeros([rows, cols], dtype=np.uint8)
+        if is_transparent:
+            f_image = np.zeros([rows, cols, 4], dtype=np.uint8)
+        else:
+            f_image = np.zeros([rows, cols, 3], dtype=np.uint8)
 
         for i in range(d_height):
             for j in range(d_width):
                 pixel = gray[i * 8, j * 8]
                 index = self.get_ascii_index_for_pixel(pixel)
-                ascii_text_image = self.get_ascii_image_by_index(index, False)
+                ascii_text_image = self.get_ascii_image_by_index(index,is_transparent)
                 f_image[i * 8 : (i + 1) * 8, j * 8 : (j + 1) * 8] = ascii_text_image
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -150,18 +160,22 @@ class P2Ascii:
 
         return result
     
-    def convert_image_to_ascii_image_simple_color(self, image_path):
+    def convert_image_to_ascii_image_simple_color(self, image_path, is_transparent):
 
         image_gray, image, image_color, d_width, d_height, rows, cols = self.prepare_images(image_path,True)
 
-        f_image = np.zeros([rows, cols, 3], dtype=np.uint8)
+        if is_transparent:
+            f_image = np.zeros([rows, cols, 4], dtype=np.uint8)
+        else:
+            f_image = np.zeros([rows, cols, 3], dtype=np.uint8)
+
         ascii_text_image_color = 0
         for i in range(d_height):
             for j in range(d_width):
                 pixel_color = image_color[i * 8, j * 8]
                 pixel_gray = image_gray[i * 8, j * 8]
                 index_gray = self.get_ascii_index_for_pixel(pixel_gray)
-                ascii_text_image = self.get_ascii_image_by_index(index_gray, True).copy()
+                ascii_text_image = self.get_ascii_image_by_index(index_gray,is_transparent).copy()
                 ascii_text_image_color = self.set_color_of_ascii_image(ascii_text_image, pixel_color)
                 f_image[i * 8 : (i + 1) * 8, j * 8 : (j + 1) * 8] = (ascii_text_image_color)
 
@@ -240,7 +254,7 @@ class P2Ascii:
 
         return result
 
-    def convert_image_to_ascii_image_complex(self, image_path, mag_threshold):
+    def convert_image_to_ascii_image_complex(self, image_path, mag_threshold,is_transparent):
         gray, image, color, d_width, d_height, rows, cols = self.prepare_images(image_path,False)
 
         magnitude_downscaled, orientation_downscaled, magnitude = self.compute_gradients(gray, rows, cols)
@@ -248,7 +262,10 @@ class P2Ascii:
         nonzero_magnitudes = magnitude_downscaled[magnitude_downscaled > 0]
         threshold = np.percentile(nonzero_magnitudes, 90)
 
-        f_image = np.zeros([rows, cols], dtype=np.uint8)
+        if is_transparent:
+            f_image = np.zeros([rows, cols, 4], dtype=np.uint8)
+        else:
+            f_image = np.zeros([rows, cols, 3], dtype=np.uint8)
 
         value = 30
         if str(mag_threshold).lower() == "auto":
@@ -272,13 +289,13 @@ class P2Ascii:
                 if np.mean(block_mag) < value:
                     pixel = gray[i * 8, j * 8]
                     index = self.get_ascii_index_for_pixel(pixel)
-                    ascii_text_image = self.get_ascii_image_by_index(index, False)
+                    ascii_text_image = self.get_ascii_image_by_index(index,is_transparent)
                     f_image[i * 8 : (i + 1) * 8, j * 8 : (j + 1) * 8] = ascii_text_image
                     continue
 
                 angle = orientation_downscaled[i * 8, j * 8]
                 index = self.get_ascii_orientation_index_for_angle(angle)
-                ascii_text_image = self.get_ascii_orientation_image_by_index(index, False)
+                ascii_text_image = self.get_ascii_orientation_image_by_index(index,is_transparent)
                 f_image[i * 8 : (i + 1) * 8, j * 8 : (j + 1) * 8] = ascii_text_image
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -286,7 +303,7 @@ class P2Ascii:
         save_path = Path.cwd() / filename
         cv2.imwrite(str(save_path), f_image.astype(np.uint8))
 
-    def convert_image_to_ascii_image_complex_color(self, image_path, mag_threshold):
+    def convert_image_to_ascii_image_complex_color(self, image_path, mag_threshold,is_transparent):
         gray, image, color, d_width, d_height, rows, cols = self.prepare_images(image_path,True)
 
         magnitude_downscaled, orientation_downscaled, magnitude = self.compute_gradients(gray, rows, cols)
@@ -294,7 +311,10 @@ class P2Ascii:
         nonzero_magnitudes = magnitude_downscaled[magnitude_downscaled > 0]
         threshold = np.percentile(nonzero_magnitudes, 90)
 
-        f_image = np.zeros([rows, cols, 3], dtype=np.uint8)
+        if is_transparent:
+            f_image = np.zeros([rows, cols, 4], dtype=np.uint8)
+        else:
+            f_image = np.zeros([rows, cols, 3], dtype=np.uint8)
 
         value = 30
         if str(mag_threshold).lower() == "auto":
@@ -319,7 +339,7 @@ class P2Ascii:
                     pixel_gray = gray[i * 8, j * 8]
                     pixel_color = color[i * 8, j * 8]
                     index_gray = self.get_ascii_index_for_pixel(pixel_gray)
-                    ascii_text_image = self.get_ascii_image_by_index(index_gray, True).copy()
+                    ascii_text_image = self.get_ascii_image_by_index(index_gray,is_transparent).copy()
                     ascii_text_image_color = self.set_color_of_ascii_image(ascii_text_image, pixel_color)
                     f_image[i * 8 : (i + 1) * 8, j * 8 : (j + 1) * 8] = (ascii_text_image_color)
                     continue
@@ -327,7 +347,7 @@ class P2Ascii:
                 angle = orientation_downscaled[i * 8, j * 8]
                 pixel_color = color[i * 8, j * 8]
                 index = self.get_ascii_orientation_index_for_angle(angle)
-                ascii_orientation_image = self.get_ascii_orientation_image_by_index(index, True).copy()
+                ascii_orientation_image = self.get_ascii_orientation_image_by_index(index,is_transparent).copy()
                 ascii_orientation_image_color = self.set_color_of_ascii_image(ascii_orientation_image, pixel_color)
                 f_image[i * 8 : (i + 1) * 8, j * 8 : (j + 1) * 8] = (ascii_orientation_image_color)
 
@@ -413,22 +433,26 @@ class P2Ascii:
         print("  p2ascii help                              Show this help message")
         print()
         print("  # SIMPLE CONVERSION WITHOUT EDGE DETECTION")
-        print("  p2ascii sc2image <img>                    Convert image to ASCII image")
-        print("  p2ascii sc2text <img>                     Convert image to ASCII text")
-        print("  p2ascii sc2cimage <img>                   Convert image to ASCII image with color")
-        print("  p2ascii sc2ctext <img>                    Convert image to ASCII text with color")
+        print("  p2ascii sc2image <img> [--transparent]    Convert image to ASCII image (output saved to file)")
+        print("  p2ascii sc2text <img>                     Convert image to ASCII text (output to console)")
+        print("  p2ascii sc2cimage <img> [--transparent]   Convert image to ASCII image with color (output saved to file)")
+        print("  p2ascii sc2ctext <img>                    Convert image to ASCII text with color (output to console)")
         print()
         print("  # COMPLEX CONVERSION WITH EDGE DETECTION")
-        print("  p2ascii cc2image <img> <thresh>           Convert image to ASCII image")
-        print("  p2ascii cc2text <img> <thresh>            Convert image to ASCII text")
-        print("  p2ascii cc2cimage <img> <thresh>          Convert image to ASCII image with color")
-        print("  p2ascii cc2ctext <img> <thresh>           Convert image to ASCII text with color")
+        print("  p2ascii cc2image <img> <thresh> [--transparent] Convert image to ASCII image (output saved to file)")
+        print("  p2ascii cc2text <img> <thresh>            Convert image to ASCII text (output to console)")
+        print("  p2ascii cc2cimage <img> <thresh> [--transparent] Convert image to ASCII image with color (output saved to file)")
+        print("  p2ascii cc2ctext <img> <thresh>           Convert image to ASCII text with color (output to console)")
         print()
         print("Note on <thresh>: ")
         print("  <thresh> defines the edge detection threshold:")
         print("    - Higher values result in fewer edges (stricter)")
         print("    - Lower values result in more edges (more permissive)")
-        print("    - 'auto' sets the threshold automatically using a 90th percentile of the nonzero gradient magnitudes:")
+        print("    - 'auto' sets the threshold automatically using a 90th percentile of the nonzero gradient magnitudes.")
+        print()
+        print("Note on [--transparent]:")
+        print("  If provided, the generated ASCII image will be transparent with only the characters appearing.")
+        print("  This option is only applicable to image output commands: sc2image, sc2cimage, cc2image, cc2cimage.")
 
     def run(self):
         if len(sys.argv) < 2:
@@ -441,47 +465,49 @@ class P2Ascii:
             self.show_help()
             return
 
-        if len(sys.argv) < 3:
-            print("No image specified")
+        is_transparent_command = "--transparent" in sys.argv
+
+        cleaned_argv = [arg for arg in sys.argv if arg != "--transparent"]
+
+        if len(cleaned_argv) < 3:
+            if command != "help":
+                print("Error: No image specified for this command, or insufficient arguments.")
             return
 
-        match command:
+        image_path = cleaned_argv[2]
+        mag_threshold = None
 
+        if command.startswith("cc"):
+            if len(cleaned_argv) < 4:
+                print(f"Error: Command '{command}' requires an image path and a magnitude threshold.")
+                return
+            mag_threshold = cleaned_argv[3]
+
+
+        match command:
             case "sc2image":
-                self.convert_image_to_ascii_image_simple(sys.argv[2])
+                self.convert_image_to_ascii_image_simple(image_path, is_transparent_command)
 
             case "sc2cimage":
-                self.convert_image_to_ascii_image_simple_color(sys.argv[2])
+                self.convert_image_to_ascii_image_simple_color(image_path, is_transparent_command)
 
             case "sc2text":
-                print(self.convert_image_to_ascii_text_simple(sys.argv[2]))
-            
+                print(self.convert_image_to_ascii_text_simple(image_path))
+
             case "sc2ctext":
-                print(self.convert_image_to_ascii_text_simple_color(sys.argv[2]))
+                print(self.convert_image_to_ascii_text_simple_color(image_path))
 
             case "cc2image":
-                if len(sys.argv) < 4:
-                    print("Error: need argument for mag threshold")
-                    return
-                self.convert_image_to_ascii_image_complex(sys.argv[2], sys.argv[3])
+                self.convert_image_to_ascii_image_complex(image_path, mag_threshold, is_transparent_command)
 
             case "cc2text":
-                if len(sys.argv) < 4:
-                    print("Error: need argument for mag threshold")
-                    return
-                print(self.convert_image_to_ascii_text_complex(sys.argv[2], sys.argv[3]))
+                print(self.convert_image_to_ascii_text_complex(image_path, mag_threshold))
 
             case "cc2cimage":
-                if len(sys.argv) < 4:
-                    print("Error: need argument for mag threshold")
-                    return
-                self.convert_image_to_ascii_image_complex_color(sys.argv[2], sys.argv[3])
+                self.convert_image_to_ascii_image_complex_color(image_path, mag_threshold, is_transparent_command)
 
             case "cc2ctext":
-                if len(sys.argv) < 4:
-                    print("Error: need argument for mag threshold")
-                    return
-                print(self.convert_image_to_ascii_text_complex_color(sys.argv[2], sys.argv[3]))
+                print(self.convert_image_to_ascii_text_complex_color(image_path, mag_threshold))
 
             case _:
                 print(f"Unknown command: {command}")
