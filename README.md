@@ -20,12 +20,22 @@ It can output:
 - Configurable edge sensitivity (`<thresh>`).
 - Terminal or image file output.
 - Simple and complex conversion modes.
+- Mode with transparency
 
 ---
 
 ## Instalation
 
----
+### Arch Linux
+
+You can install `p2ascii` directly from the AUR using your favorite AUR helper:
+`yay -S p2ascii`
+
+or manualy with 
+
+`git clone https://aur.archlinux.org/p2ascii.git
+cd p2ascii
+makepkg -si`
 
 ## Requirements
 
@@ -37,16 +47,16 @@ It can output:
 
 ### 🔹 Simple Conversion (No Edge Detection)
 
-  - `sc2image <img>`         Convert image to ASCII image
+  - `sc2image <img> [--transparent]`         Convert image to ASCII image
   - `sc2text <img>`          Convert image to ASCII text (stdout)
-  - `sc2cimage <img>`        Colored ASCII image
+  - `sc2cimage <img> [--transparent]`        Colored ASCII image
   - `sc2ctext <img>`         Colored ASCII text (stdout)
 
 ### 🔸 Complex Conversion (With Edge Detection)
 
-  - `cc2image <img> <thresh>`     ASCII image using edge orientation
+  - `cc2image <img> <thresh> [--transparent]`     ASCII image using edge orientation
   - `cc2text <img> <thresh>`      ASCII text with edge symbols (stdout)
-  - `cc2cimage <img> <thresh>`    Colored ASCII image with edge awareness
+  - `cc2cimage <img> <thresh> [--transparent]`    Colored ASCII image with edge awareness
   - `cc2ctext <img> <thresh>`     Colored ASCII text with edge symbols
 
 ## Threshold Parameter (<thresh>)
@@ -56,6 +66,10 @@ Used in complex conversion to control edge sensitivity based on gradient magnitu
   - 0–255: Manual threshold.
     - Higher = fewer edges (only strong ones)
     - Lower = more edges (fine details)
+
+## Transparency Mode (--transparent)
+
+When included, the output ASCII image will have a transparent background, displaying only the characters. This option is applicable to image output commands: sc2image, sc2cimage, cc2image, and cc2cimage.
    
 ## Example Outputs
 
