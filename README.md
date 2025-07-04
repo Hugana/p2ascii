@@ -29,11 +29,9 @@ It can output:
 ### Arch Linux
 
 You can install `p2ascii` directly from the AUR using your favorite AUR helper:
-`yay -S p2ascii`
-
-or manualy with 
-
-`git clone https://aur.archlinux.org/p2ascii.git
+- ```bash yay -S p2ascii```
+or manualy with:
+- `git clone https://aur.archlinux.org/p2ascii.git
 cd p2ascii
 makepkg -si`
 
