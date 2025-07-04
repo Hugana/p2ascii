@@ -19,7 +19,7 @@ class P2Ascii:
         self.ascii_list = [" ", ".", ":", "c", "o", "P", "B", "O", "?", "&", "#"]
         self.ascii_orientation_list = [" ", "|", "—", "/", "\\"]
 
-        script_dir = Path(__file__).parent.resolve()
+        script_dir = Path(os.path.realpath(__file__)).parent
         self.asset_dir = script_dir / "Images"
 
         self.ascii_orientation_img_color = cv2.imread(str(self.asset_dir / "edgesASCII.png"), cv2.IMREAD_COLOR)
