@@ -1,25 +1,26 @@
-# Maintainer: hugo.dn.ferreira@gmail.com
 pkgname=p2ascii
 pkgver=1.0.0
 pkgrel=1
-pkgdesc="A simple tool to convert pixel art images to ASCII using OpenCV"
+pkgdesc="Image to ASCII art converter with optional color and edge-based rendering"
 arch=('any')
 url="https://github.com/Hugana/p2ascii"
 license=('MIT')
-depends=('python' 'opencv')
-source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
-sha256sums=('SKIP')
+depends=('python' 'opencv' 'python-numpy')
+source=(
+  "$pkgname-$pkgver.tar.gz::https://github.com/Hugana/p2ascii/archive/refs/tags/v$pkgver.tar.gz"
+)
+sha256sums=('f312fd51e717ce6adb7b645ede5d5c312519670b364c104b29f5cb9e10561c86')
+
+prepare() {
+  cd "$srcdir/$pkgname-$pkgver"
+}
 
 package() {
   cd "$srcdir/$pkgname-$pkgver"
-
-  # Create destination directory
-  install -d "$pkgdir/usr/share/$pkgname"
-
-  # Copy script and Images/ directory to /usr/share/p2ascii
-  cp -r p2ascii.py Images "$pkgdir/usr/share/$pkgname/"
-
-  # Symlink to make the script callable as 'p2ascii'
+  install -d "$pkgdir/usr/share/$pkgname/Images"
+  install -m755 p2ascii.py "$pkgdir/usr/share/$pkgname/"
+  install -m644 Images/*.png "$pkgdir/usr/share/$pkgname/Images/"
   install -d "$pkgdir/usr/bin"
   ln -s "/usr/share/$pkgname/p2ascii.py" "$pkgdir/usr/bin/p2ascii"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }
