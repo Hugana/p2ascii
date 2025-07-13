@@ -5,7 +5,7 @@ pkgdesc="Image to ASCII art converter with optional color and edge-based renderi
 arch=('any')
 url="https://github.com/Hugana/p2ascii"
 license=('MIT')
-depends=('python' 'opencv' 'python-numpy')
+depends=('python' 'opencv' 'python-numpy' 'python-opencv')
 source=(
   "$pkgname-$pkgver.tar.gz::https://github.com/Hugana/p2ascii/archive/refs/tags/v$pkgver.tar.gz"
 )
