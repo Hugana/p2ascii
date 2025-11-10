@@ -6,13 +6,6 @@ from pathlib import Path
 import os 
 import cv2
 import numpy as np
-import sys
-from datetime import datetime
-from pathlib import Path
-import os
-import cv2
-import numpy as np
-
 
 class P2Ascii:
     def __init__(self):
